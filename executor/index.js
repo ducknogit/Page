@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quack executor - classic</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #0E0E0E;
+            --bg-elevated: #141414;
+            --bg-surface: #1A1A1A;
+            --bg-hover: #202020;
+            --bg-active: #282828;
+            --border: #1C1C1C;
+            --border-light: #2A2A2A;
+            --text-primary: #D4D4D4;
+            --text-secondary: #888888;
+            --text-muted: #555555;
+            --accent: #5B8DEF;
+            --success: #22C55E;
+            --danger: #EF4444;
+            --font-ui: 'Inter', 'Segoe UI', -apple-system, sans-serif;
+            --font-mono: 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace;
+            --radius: 6px;
+            --radius-sm: 4px;
+            --transition: 0.15s ease;
+            --bounce: 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text-primary);
+            font-family: var(--font-ui);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--bg-active); border-radius: 2px; }
+        ::-webkit-scrollbar-thumb:hover { background: #333; }
+
+        #hero {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            padding: 40px 24px;
+        }
+
+        #hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 50% 0%, rgba(91,141,239,0.06) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        #hero-grid {
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+            background-size: 50px 50px;
+            mask-image: radial-gradient(ellipse at 50% 30%, black 30%, transparent 70%);
+            -webkit-mask-image: radial-gradient(ellipse at 50% 30%, black 30%, transparent 70%);
+            pointer-events: none;
+            transform: perspective(800px) rotateX(45deg) translateY(-15%);
+            transform-origin: center top;
+            animation: gridMove 25s linear infinite;
+        }
+        @keyframes gridMove {
+            0% { transform: perspective(800px) rotateX(45deg) translateY(-15%) translateX(0); }
+            50% { transform: perspective(800px) rotateX(45deg) translateY(-8%) translateX(15px); }
+            100% { transform: perspective(800px) rotateX(45deg) translateY(-15%) translateX(0); }
+        }
+
+        #hero-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        .splash-logo {
+            width: 80px;
+            height: 80px;
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 24px;
+            border: 1px solid var(--border-light);
+            background-size: cover;
+            background-position: center;
+            transition: transform 0.4s var(--bounce);
+            transform: perspective(600px) rotateX(4deg) translateZ(20px);
+        }
+        .splash-logo:hover {
+            transform: perspective(600px) rotateX(0deg) translateZ(30px) scale(1.05);
+        }
+
+        .hero-title {
+            font-size: clamp(36px, 7vw, 64px);
+            font-weight: 700;
+            font-family: var(--font-mono);
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+            margin-bottom: 28px;
+        }
+        .hero-title span {
+            background: linear-gradient(135deg, var(--accent), #8B5CF6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 36px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 24px;
+            border-radius: var(--radius);
+            font-family: var(--font-ui);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            text-decoration: none;
+            transition: all 0.25s var(--bounce);
+            height: 38px;
+        }
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(91,141,239,0.35);
+        }
+        .btn-secondary {
+            background: var(--bg-surface);
+            color: var(--text-primary);
+            border: 1px solid var(--border-light);
+        }
+        .btn-secondary:hover {
+            background: var(--bg-hover);
+            border-color: var(--text-muted);
+            transform: translateY(-2px);
+        }
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+        .btn-ghost:hover {
+            color: var(--text-primary);
+            border-color: var(--text-muted);
+            transform: translateY(-2px);
+        }
+
+        #wpf-wrap {
+            width: 100%;
+            max-width: 900px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border-light);
+            box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+            transform: perspective(800px) rotateX(2deg) translateZ(30px);
+            background: var(--bg);
+            will-change: transform;
+        }
+
+        #wpf-titlebar {
+            height: 45px;
+            background: var(--bg);
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+
+        #wpf-titlebar .app-title {
+            font-family: var(--font-mono);
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-left: 15px;
+            flex-shrink: 0;
+        }
+
+        #wpf-tab-center {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 144px;
+            height: 32px;
+        }
+        #wpf-tab-center .tab-indicator {
+            width: 20px;
+            height: 3px;
+            background: white;
+            border-radius: 1.5px;
+            position: absolute;
+            bottom: 2px;
+            left: 14px;
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            pointer-events: none;
+        }
+        #wpf-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 0;
+        }
+        #wpf-tabs .wpf-tab {
+            width: 48px;
+            height: 32px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius);
+            opacity: 0.6;
+            transition: opacity var(--transition);
+            margin: 0 2px;
+        }
+        #wpf-tabs .wpf-tab:hover { opacity: 0.8; }
+        #wpf-tabs .wpf-tab.active { opacity: 1; }
+        #wpf-tabs .wpf-tab img { width: 18px; height: 18px; opacity: 0.85; pointer-events: none; }
+
+        #wpf-win-controls {
+            display: flex;
+            gap: 5px;
+            margin-left: auto;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+        #wpf-win-controls .win-btn {
+            width: 30px;
+            height: 30px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            opacity: 0.6;
+            transition: opacity var(--transition), background var(--transition);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #wpf-win-controls .win-btn:hover { opacity: 1; background: var(--bg-hover); }
+        #wpf-win-controls .win-btn img { width: 14px; height: 14px; opacity: 0.7; pointer-events: none; }
+
+        #wpf-body {
+            height: 480px;
+            border-top: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .wpf-tab-pane {
+            display: none;
+            height: 100%;
+            width: 100%;
+        }
+        .wpf-tab-pane.active { display: block; }
+
+        /* ═══ EDITOR LAYOUT (from editor.html) ═══ */
+        #editor-explorer {
+            width: 220px;
+            min-width: 28px;
+            background: var(--bg);
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border);
+            transition: width 0.3s var(--bounce);
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        #editor-explorer.collapsed { width: 28px; }
+        #editor-explorer.collapsed #editor-explorer-body { display: none; }
+        #editor-explorer.collapsed #editor-explorer-toggle span { display: none; }
+        #editor-explorer.collapsed #editor-explorer-toggle { justify-content: center; padding: 0; }
+
+        #editor-explorer-toggle {
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2px 0 12px;
+            flex-shrink: 0;
+            border-top: 1px solid var(--border);
+        }
+        #editor-explorer-toggle span {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        #editor-explorer-toggle button {
+            width: 22px; height: 22px;
+            background: transparent; border: none;
+            color: var(--text-muted); cursor: pointer;
+            font-size: 10px; border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center;
+            transition: transform 0.3s var(--bounce);
+        }
+        #editor-explorer.collapsed #editor-explorer-toggle button { transform: rotate(180deg); }
+        #editor-explorer-toggle button:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+        #editor-explorer-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border-top: 1px solid var(--border);
+        }
+
+        #editor-explorer-search {
+            margin: 6px 8px; height: 24px;
+            background: var(--bg-elevated); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); padding: 0 8px;
+            color: var(--text-secondary); font-size: 11px;
+            outline: none; font-family: var(--font-ui);
+        }
+        #editor-explorer-search::placeholder { color: var(--text-muted); }
+        #editor-explorer-search:focus { border-color: var(--accent); color: var(--text-primary); }
+
+        .explorer-tree { flex: 1; overflow-y: auto; padding: 2px 0; }
+        .explorer-tree::-webkit-scrollbar { width: 3px; }
+
+        .folder-row {
+            display: flex; align-items: center;
+            height: 26px; padding: 0 8px 0 4px;
+            cursor: pointer; gap: 2px;
+            color: var(--text-secondary); font-size: 12px;
+            transition: background var(--transition);
+            border-bottom: 1px solid var(--border);
+        }
+        .folder-row:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .folder-row .arrow {
+            width: 16px; text-align: center;
+            font-size: 8px; color: var(--text-muted);
+            transition: transform 0.2s;
+            flex-shrink: 0;
+        }
+        .folder-row .arrow.open { transform: rotate(90deg); }
+        .folder-row .folder-name { flex: 1; font-weight: 500; }
+
+        .file-list { overflow: hidden; }
+        .file-row {
+            display: flex; align-items: center;
+            height: 24px; padding: 0 8px 0 20px;
+            cursor: pointer; gap: 4px;
+            color: var(--text-secondary); font-size: 12px;
+            transition: background 0.12s, color var(--transition);
+        }
+        .file-row:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .file-row.active { color: var(--text-primary); background: rgba(91,141,239,0.06); }
+        .file-row .file-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        #editor-app {
+            display: flex;
+            height: 100%;
+            width: 100%;
+            background: var(--bg);
+            text-align: left;
+        }
+        #editor-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            text-align: left;
+        }
+
+        #editor-tabbar {
+            height: 32px;
+            background: var(--bg);
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .editor-tab {
+            height: 100%;
+            min-width: 40px;
+            max-width: 140px;
+            padding: 0 4px 0 8px;
+            background: var(--bg-elevated);
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            border-right: 1px solid var(--border);
+            border-top: 1px solid var(--border);
+            flex: 1 1 0;
+            min-width: 0;
+            transition: background var(--transition), color var(--transition);
+        }
+        .editor-tab:hover { background: var(--bg-surface); color: var(--text-secondary); }
+        .editor-tab.active {
+            background: var(--bg);
+            color: var(--text-primary);
+        }
+        .editor-tab .tab-name {
+            flex: 1; overflow: hidden;
+            text-overflow: ellipsis; white-space: nowrap;
+            min-width: 0;
+        }
+        .editor-tab .tab-close {
+            width: 16px; height: 16px;
+            background: transparent; border: none;
+            color: transparent; cursor: pointer;
+            font-size: 12px; border-radius: 3px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            transition: background var(--transition);
+        }
+        .editor-tab:hover .tab-close { color: var(--text-muted); }
+        .editor-tab .tab-close:hover { background: rgba(255,255,255,0.06); color: var(--text-primary); }
+
+        #editor-add-tab {
+            width: 22px; height: 22px;
+            background: transparent; border: none;
+            color: var(--text-muted); cursor: pointer;
+            font-size: 14px; border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; margin: 0 4px;
+            transition: background var(--transition), color var(--transition);
+        }
+        #editor-add-tab:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+        #editor-monaco-wrap {
+            flex: 1; position: relative; min-height: 0;
+            overflow: hidden;
+            background: var(--bg);
+        }
+        #monaco-container {
+            width: 100%; height: 100%;
+            text-align: left;
+        }
+
+        #editor-toolbar {
+            height: 34px;
+            background: var(--bg);
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 4px;
+            flex-shrink: 0;
+            text-align: left;
+        }
+        #editor-toolbar-left { display: flex; align-items: center; flex: 1; }
+        #editor-toolbar-right { display: flex; align-items: center; }
+
+        .tb-btn {
+            height: 26px; padding: 0 8px;
+            background: transparent; border: none;
+            color: var(--text-secondary); cursor: pointer;
+            font-size: 12px; border-radius: var(--radius-sm);
+            display: flex; align-items: center;
+            font-family: var(--font-ui);
+            white-space: nowrap;
+            transition: background var(--transition), color var(--transition);
+        }
+        .tb-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+        #editor-status {
+            height: 22px;
+            background: var(--bg);
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            font-size: 11px;
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+        #editor-status-left { flex: 1; display: flex; align-items: center; gap: 6px; }
+
+        /* ═══ INTERNET TAB (script browser) ═══ */
+        .script-browser {
+            display: flex;
+            flex-direction: row;
+            align-items: stretch;
+            height: 100%;
+            background: var(--bg);
+        }
+        .script-sidebar {
+            width: 220px; flex-shrink: 0;
+            background: var(--bg);
+            display: flex; flex-direction: column;
+            border-right: 1px solid var(--border);
+        }
+        .script-sidebar-title {
+            height: 36px; display: flex; align-items: center;
+            padding: 0 12px; font-size: 11px; font-weight: 600;
+            color: var(--text-muted); text-transform: uppercase;
+            letter-spacing: 1px; border-bottom: 1px solid var(--border);
+        }
+        .script-search-wrap {
+            padding: 6px 8px; border-bottom: 1px solid var(--border);
+        }
+        .script-search {
+            width: 100%; height: 28px;
+            background: var(--bg-elevated); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); padding: 0 8px;
+            color: var(--text-secondary); font-size: 12px;
+            outline: none; font-family: var(--font-ui);
+        }
+        .script-search::placeholder { color: var(--text-muted); }
+        .script-search:focus { border-color: var(--accent); color: var(--text-primary); }
+        .script-sidebar-bottom {
+            margin-top: auto;
+            padding: 6px 8px;
+            border-top: 1px solid var(--border);
+            display: flex; flex-direction: column; gap: 4px;
+        }
+        .sb-btn {
+            height: 28px; padding: 0 8px;
+            background: transparent; border: 1px solid var(--border);
+            color: var(--text-secondary); cursor: pointer;
+            font-size: 12px; border-radius: var(--radius-sm);
+            font-family: var(--font-ui); text-align: left;
+            transition: background var(--transition), border-color var(--transition), color var(--transition);
+        }
+        .sb-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .sb-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(91,141,239,0.08); }
+        .script-content {
+            flex: 1; display: flex; flex-direction: column;
+            min-width: 0; overflow: hidden;
+        }
+        .script-content-header {
+            height: 36px; display: flex; align-items: center;
+            padding: 0 12px; border-bottom: 1px solid var(--border);
+            font-size: 12px; color: var(--text-secondary);
+        }
+        .script-results {
+            flex: 1; overflow-y: auto; padding: 8px;
+            display: flex; flex-direction: column; gap: 6px;
+        }
+        .script-results::-webkit-scrollbar { width: 3px; }
+        .sc-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 10px 12px;
+            transition: border-color var(--transition);
+        }
+        .sc-card:hover { border-color: var(--bg-active); }
+        .sc-title {
+            font-size: 13px; font-weight: 600;
+            color: var(--text-primary); margin-bottom: 4px;
+        }
+        .sc-meta {
+            font-size: 11px; color: var(--text-muted);
+            display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+            margin-bottom: 6px;
+        }
+        .sc-actions { display: flex; gap: 4px; margin-top: 6px; }
+        .sc-actions button {
+            height: 22px; padding: 0 8px;
+            background: var(--bg-surface); border: none;
+            color: var(--text-secondary); cursor: pointer;
+            font-size: 11px; border-radius: var(--radius-sm);
+            font-family: var(--font-ui);
+            transition: background var(--transition), color var(--transition);
+        }
+        .sc-actions button:hover { background: var(--bg-active); color: var(--text-primary); }
+        .sc-actions .insert-btn { color: var(--accent); }
+        .sc-actions .insert-btn:hover { background: rgba(91,141,239,0.15); }
+
+        /* ═══ SETTINGS TAB ═══ */
+        .settings-pane {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 20px;
+            background: #0E0E0E;
+            margin: 10px;
+            border-radius: 6px;
+            border: 1px solid #2A2A2A;
+        }
+        .settings-pane .stitle {
+            text-align: center;
+            margin: 30px 0 20px;
+            color: #888888;
+            font-size: 13px;
+            font-family: var(--font-mono);
+        }
+        .settings-pane .slink {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #0E0E0E;
+            border-radius: 6px;
+            padding: 10px 14px;
+            cursor: pointer;
+            transition: background var(--transition);
+        }
+        .settings-pane .slink:hover { background: var(--bg-hover); }
+        .settings-pane .slabel { font-family: var(--font-mono); font-size: 12px; font-weight: 700; white-space: nowrap; }
+        .settings-pane .surl {
+            font-family: var(--font-mono); font-size: 11px;
+            color: #888888;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .settings-pane .sfooter {
+            margin: 20px 0 30px;
+            color: #5B8DEF;
+            font-size: 14px;
+            font-family: var(--font-mono);
+            font-weight: 700;
+            text-align: center;
+        }
+
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 28px 24px;
+            text-align: center;
+        }
+        footer p {
+            color: var(--text-muted);
+            font-size: 12px;
+            font-family: var(--font-mono);
+        }
+        footer .links {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        footer .links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 12px;
+            transition: color var(--transition);
+            font-family: var(--font-mono);
+        }
+        footer .links a:hover { color: var(--accent); }
+
+        @media (max-width: 700px) {
+            #wpf-titlebar .app-title { font-size: 11px; margin-left: 10px; }
+            #wpf-tab-center { width: 120px; }
+            #wpf-tabs .wpf-tab { width: 40px; }
+            #wpf-tab-center .tab-indicator { left: 10px; }
+            #editor-explorer { width: 28px; }
+        }
+        @media (max-width: 600px) {
+            #hero { padding: 20px 12px; }
+            .hero-actions .btn { width: 100%; justify-content: center; }
+            #wpf-body { height: 340px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="hero">
+        <div id="hero-grid"></div>
+
+        <div id="hero-content">
+            <div class="splash-logo" style="background-image:url('QuackExecutor/Icons/logo.jpg');"></div>
+
+            <h1 class="hero-title">
+                Quack executor<br><span>classic</span>
+            </h1>
+
+            <div class="hero-actions">
+                <a class="btn btn-primary" href="quack.zip">
+                    <span>↓</span> Download
+                </a>
+                <a class="btn btn-ghost" href="https://discord.gg/wEtUJv2eMz" target="_blank">
+                    Discord
+                </a>
+            </div>
+
+            <div id="wpf-wrap">
+                <div id="wpf-titlebar">
+                    <span class="app-title">Quack executor - classic</span>
+                    <div id="wpf-tab-center">
+                        <div class="tab-indicator" id="tabIndicator"></div>
+                        <div id="wpf-tabs">
+                            <button class="wpf-tab active" data-tab="editor"><img src="QuackExecutor/Icons/editor.png" alt="Editor"></button>
+                            <button class="wpf-tab" data-tab="internet"><img src="QuackExecutor/Icons/internet.png" alt="Internet"></button>
+                            <button class="wpf-tab" data-tab="settings"><img src="QuackExecutor/Icons/gear.png" alt="Settings"></button>
+                        </div>
+                    </div>
+                    <div id="wpf-win-controls">
+                        <button class="win-btn"><img src="QuackExecutor/Icons/min.png" alt="Minimize"></button>
+                        <button class="win-btn"><img src="QuackExecutor/Icons/closeicon.png" alt="Close"></button>
+                    </div>
+                </div>
+
+                <div id="wpf-body">
+
+                    <!-- ═══ EDITOR TAB (full editor.html layout) ═══ -->
+                    <div class="wpf-tab-pane active" id="pane-editor">
+                        <div id="editor-app">
+                            <div id="editor-explorer">
+                                <div id="editor-explorer-toggle">
+                                    <span>Explorer</span>
+                                    <button onclick="toggleExplorer()">◀</button>
+                                </div>
+                                <div id="editor-explorer-body">
+                                    <input id="editor-explorer-search" placeholder="Search files..." spellcheck="false">
+                                    <div class="explorer-tree">
+                                        <div class="folder-row">
+                                            <span class="arrow open">▶</span>
+                                            <span class="folder-name">Scripts</span>
+                                        </div>
+                                        <div class="file-list">
+                                            <div class="file-row active"><span class="file-name">main.lua</span></div>
+                                            <div class="file-row"><span class="file-name">gui.lua</span></div>
+                                        </div>
+                                        <div class="folder-row">
+                                            <span class="arrow open">▶</span>
+                                            <span class="folder-name">AutoExec</span>
+                                        </div>
+                                        <div class="file-list">
+                                            <div class="file-row"><span class="file-name">startup.lua</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="editor-main">
+                                <div id="editor-tabbar">
+                                    <div class="editor-tab active">
+                                        <span class="tab-name">main.lua</span>
+                                        <button class="tab-close">×</button>
+                                    </div>
+                                    <div class="editor-tab">
+                                        <span class="tab-name">gui.lua</span>
+                                        <button class="tab-close">×</button>
+                                    </div>
+                                    <button id="editor-add-tab">+</button>
+                                </div>
+                                <div id="editor-monaco-wrap">
+                                    <div id="monaco-container"></div>
+                                </div>
+                                <div id="editor-toolbar">
+                                    <div id="editor-toolbar-left">
+                                        <button class="tb-btn">Execute</button>
+                                        <button class="tb-btn">Clear</button>
+                                        <button class="tb-btn">Copy</button>
+                                        <button class="tb-btn">Paste</button>
+                                        <button class="tb-btn">Kill</button>
+                                        <button class="tb-btn">Output</button>
+                                    </div>
+                                    <div id="editor-toolbar-right">
+                                        <button class="tb-btn">Attach</button>
+                                    </div>
+                                </div>
+                                <div id="editor-status">
+                                    <div id="editor-status-left"><span>NgotBandSoPeak</span></div>
+                                    <span id="editor-status-right">Ready</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ═══ INTERNET TAB (script browser) ═══ -->
+                    <div class="wpf-tab-pane" id="pane-internet">
+                        <div class="script-browser">
+                            <div class="script-sidebar">
+                                <div class="script-sidebar-title">Script</div>
+                                <div class="script-search-wrap">
+                                    <input class="script-search" placeholder="Search scripts..." spellcheck="false">
+                                </div>
+                                <div class="script-sidebar-bottom">
+                                    <button class="sb-btn active">ScriptBlox</button>
+                                    <button class="sb-btn">Rscripts</button>
+                                </div>
+                            </div>
+                            <div class="script-content">
+                                <div class="script-content-header">Trending Scripts</div>
+                                <div class="script-results">
+                                    <div class="sc-card">
+                                        <div class="sc-title">Infinite Yield</div>
+                                        <div class="sc-meta"><span>⭐ 4.8k</span><span>📥 120k</span><span>Admin</span></div>
+                                        <div class="sc-actions">
+                                            <button>Load</button>
+                                            <button class="insert-btn">Insert</button>
+                                        </div>
+                                    </div>
+                                    <div class="sc-card">
+                                        <div class="sc-title">Dex Explorer</div>
+                                        <div class="sc-meta"><span>⭐ 3.2k</span><span>📥 85k</span><span>Explorer</span></div>
+                                        <div class="sc-actions">
+                                            <button>Load</button>
+                                            <button class="insert-btn">Insert</button>
+                                        </div>
+                                    </div>
+                                    <div class="sc-card">
+                                        <div class="sc-title">RemoteSpy</div>
+                                        <div class="sc-meta"><span>⭐ 2.1k</span><span>📥 45k</span><span>Remote</span></div>
+                                        <div class="sc-actions">
+                                            <button>Load</button>
+                                            <button class="insert-btn">Insert</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ═══ SETTINGS TAB ═══ -->
+                    <div class="wpf-tab-pane" id="pane-settings">
+                        <div class="settings-pane">
+                            <div class="stitle">There no setting but</div>
+                            <div style="display:flex;flex-direction:column;gap:8px;align-items:stretch;width:100%;max-width:360px;">
+                                <div class="slink" onclick="window.open('https://discord.gg/wEtUJv2eMz')">
+                                    <span class="slabel" style="color:#5865F2;">Discord:</span>
+                                    <span class="surl">https://discord.gg/wEtUJv2eMz</span>
+                                </div>
+                                <div class="slink" onclick="window.open('https://www.youtube.com/@ductrenyt')">
+                                    <span class="slabel" style="color:#FF4444;">Youtube:</span>
+                                    <span class="surl">https://www.youtube.com/@ductrenyt</span>
+                                </div>
+                                <div class="slink" onclick="window.open('https://ducknovis.tech/executor')">
+                                    <span class="slabel" style="color:#22C55E;">Website:</span>
+                                    <span class="surl">https://ducknovis.tech/executor</span>
+                                </div>
+                            </div>
+                            <div class="sfooter">Try Nam Executor !</div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="links">
+            <a href="https://discord.gg/wEtUJv2eMz" target="_blank">Discord</a>
+            <a href="https://www.youtube.com/@ductrenyt" target="_blank">YouTube</a>
+            <a href="https://ducknovis.tech/executor" target="_blank">Website</a>
+        </div>
+        <p>Quack executor - classic</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.24.0/min/vs/loader.js"></script>
+    <script>
+        "use strict";
+
+        var editor = null;
+        var tabPositions = { editor: 14, internet: 62, settings: 110 };
+
+        window.switchTab = function(tab) {
+            var indicator = document.getElementById("tabIndicator");
+            indicator.style.transform = "translateX(" + (tabPositions[tab] - 14) + "px)";
+
+            document.querySelectorAll(".wpf-tab").forEach(function(t) { t.classList.remove("active"); });
+            document.querySelector(".wpf-tab[data-tab=\"" + tab + "\"]").classList.add("active");
+
+            document.querySelectorAll(".wpf-tab-pane").forEach(function(p) { p.classList.remove("active"); });
+            document.getElementById("pane-" + tab).classList.add("active");
+
+            if (tab === "editor" && editor) {
+                setTimeout(function() { editor.layout(); }, 50);
+            }
+        };
+
+        document.querySelectorAll(".wpf-tab").forEach(function(el) {
+            el.addEventListener("click", function() {
+                window.switchTab(this.getAttribute("data-tab"));
+            });
+        });
+
+        window.toggleExplorer = function() {
+            document.getElementById("editor-explorer").classList.toggle("collapsed");
+            if (editor) setTimeout(function() { editor.layout(); }, 300);
+        };
+
+        document.querySelectorAll(".win-btn").forEach(function(btn) {
+            btn.addEventListener("mouseenter", function() {
+                if (this.querySelector("img").src.indexOf("closeicon") !== -1) {
+                    this.style.background = "rgba(239,68,68,0.15)";
+                }
+            });
+            btn.addEventListener("mouseleave", function() {
+                this.style.background = "transparent";
+            });
+        });
+
+        document.querySelectorAll(".sb-btn").forEach(function(btn) {
+            btn.addEventListener("click", function() {
+                document.querySelectorAll(".sb-btn").forEach(function(b) { b.classList.remove("active"); });
+                this.classList.add("active");
+            });
+        });
+
+        var RKEYWORDS = "and|or|not|break|do|else|elseif|end|for|function|goto|if|in|local|repeat|return|then|until|while";
+        var RBUILTIN = "print|require|error|pcall|xpcall|wait|spawn|delay|time|tick|tostring|tonumber|type|typeof|pairs|ipairs|next|select|unpack|rawget|rawset|rawequal|setmetatable|getmetatable|setfenv|getfenv|loadstring|newproxy|warn|setreadonly|isreadonly|getgc|getgenv|getrenv|getreg|checkcaller|gethui|hookfunction|iscclosure|islclosure|iskrnlclosure|newcclosure|getcallingscript|getloadedmodules|getscriptclosure|decompile|getconnections|fireclickdetector|firetouchinterest|fireproximityprompt|gethiddenproperty|sethiddenproperty|getproperties|setsimulationradius|getspecialinfo|setscriptable|getnamecallmethod|setnamecallmethod|getrawmetatable|setrawmetatable|keypress|keyrelease|mouse1click|mouse1press|mouse1release|mouse2click|mouse2press|mouse2release|mousemoverel|mousemoveabs|mousescroll|isrbxactive|getnetworkmode|setnetworkmode|queue_on_teleport|setclipboard|getcustomasset|setfpscap|isfolder|isfile|makefolder|delfile|delfolder|listfiles|readfile|writefile|appendfile|rconsolename|rconsoleprint|rconsoleinfo|rconsolewarn|rconsoleerr|rconsoleclose|rconsoleclear|rconsoleinput|messagebox|request|saveinstance|identifyexecutor|getexecutorname|getidentity|setthreadidentity|printidentity|setfflag|getfflag|getfpscap|getthreadcontext|setthreadcontext";
+        var RCLASSES = "game|workspace|script|plugin|task|_G|_VERSION|shared|Enum|Drawing|Instance|DataModel|Workspace|Model|Part|BasePart|Player|Players|Humanoid|LocalScript|ModuleScript|CFrame|Color3|Vector2|Vector3|UDim2|BrickColor|RBXScriptSignal|Camera|Lighting|Sound|Animation|Tool|Backpack|ScreenGui|TextLabel|TextButton";
+
+        require.config({
+            paths: { vs: "https://cdn.jsdelivr.net/npm/monaco-editor@0.24.0/min/vs" }
+        });
+
+        require(["vs/editor/editor.main"], function() {
+
+            monaco.languages.register({ id: "lua" });
+
+            monaco.languages.setMonarchTokensProvider("lua", {
+                defaultToken: "",
+                tokenPostfix: ".lua",
+                keywords: [
+                    "and","break","do","else","elseif","end","false","for",
+                    "function","goto","if","in","local","nil","not","or",
+                    "repeat","return","then","true","until","while"
+                ],
+                brackets: [
+                    { open: "{", close: "}", token: "delimiter.curly" },
+                    { open: "[", close: "]", token: "delimiter.square" },
+                    { open: "(", close: ")", token: "delimiter.parenthesis" }
+                ],
+                tokenizer: {
+                    root: [
+                        [/--\[\[.*?\]\]/, "comment"],
+                        [/--\[=*\[/, { token: "comment", next: "@commentMultiline" }],
+                        [/--.*$/, "comment"],
+                        [new RegExp("\\b(" + RKEYWORDS + ")\\b"), { cases: { "@default": "keyword" } }],
+                        [/\b(true|false|nil)\b/, "constant"],
+                        [new RegExp("\\b(" + RBUILTIN + ")\\b"), "type.identifier"],
+                        [new RegExp("\\b(" + RCLASSES + ")\\b"), "type.identifier"],
+                        [/"/, { token: "string.escape", next: "@stringDouble" }],
+                        [/'/, { token: "string.escape", next: "@stringSingle" }],
+                        [/\[\[/, { token: "string", next: "@longString" }],
+                        [/\[=*\[/, { token: "string", next: "@longString" }],
+                        [/[{}()\[\]]/, "@brackets"],
+                        [/0[xX][0-9a-fA-F_]+/, "number"],
+                        [/[0-9_]+(\.[0-9_]*)?([eE][+-]?[0-9_]+)?/, "number"],
+                        [/\.\.\./, "identifier"],
+                        [/\w+/, "identifier"],
+                        [/[+\-*\/^%=#<>~]/, "delimiter"]
+                    ],
+                    commentMultiline: [
+                        [/\]\]/, { token: "comment", next: "@pop" }],
+                        [/./, "comment"]
+                    ],
+                    stringDouble: [
+                        [/[^\\"]+/, "string"],
+                        [/\\([abfnrtv\\"]|[0-7]{1,3}|x[0-9a-fA-F]+)/, "string.escape"],
+                        [/"/, { token: "string.escape", next: "@pop" }]
+                    ],
+                    stringSingle: [
+                        [/[^\\']+/, "string"],
+                        [/\\([abfnrtv\\']|[0-7]{1,3}|x[0-9a-fA-F]+)/, "string.escape"],
+                        [/'/, { token: "string.escape", next: "@pop" }]
+                    ],
+                    longString: [
+                        [/\]\]/, { token: "string", next: "@pop" }],
+                        [/./, "string"]
+                    ]
+                }
+            });
+
+            monaco.editor.defineTheme("executor-dark", {
+                base: "vs-dark",
+                inherit: true,
+                rules: [
+                    { token: "keyword", foreground: "569CD6", fontStyle: "bold" },
+                    { token: "constant", foreground: "569CD6" },
+                    { token: "type.identifier", foreground: "DCDCAA" },
+                    { token: "string", foreground: "CE9178" },
+                    { token: "string.escape", foreground: "CE9178" },
+                    { token: "comment", foreground: "6A9955", fontStyle: "italic" },
+                    { token: "number", foreground: "B5CEA8" },
+                    { token: "identifier", foreground: "D4D4D4" },
+                    { token: "delimiter", foreground: "D4D4D4" },
+                    { token: "delimiter.curly", foreground: "D4D4D4" },
+                    { token: "delimiter.square", foreground: "D4D4D4" },
+                    { token: "delimiter.parenthesis", foreground: "D4D4D4" }
+                ],
+                colors: {
+                    "editor.background": "#0E0E0E",
+                    "editor.foreground": "#D4D4D4",
+                    "editor.lineHighlightBackground": "#141414",
+                    "editor.selectionBackground": "#264F78",
+                    "editorCursor.foreground": "#5B8DEF",
+                    "editorLineNumber.foreground": "#555555",
+                    "editorLineNumber.activeForeground": "#888888",
+                    "editorIndentGuide.background": "#1C1C1C",
+                    "editorIndentGuide.activeBackground": "#282828",
+                    "editorWidget.background": "#141414",
+                    "editorWidget.border": "#1C1C1C",
+                    "input.background": "#141414",
+                    "input.border": "#1C1C1C",
+                    "input.foreground": "#D4D4D4",
+                    "scrollbarSlider.background": "#28282880",
+                    "scrollbarSlider.hoverBackground": "#282828",
+                    "scrollbarSlider.activeBackground": "#333333",
+                    "editorGutter.background": "#0E0E0E"
+                }
+            });
+
+            var demoCode = '-- This UI is just a demo ai slop';
+
+            editor = monaco.editor.create(document.getElementById("monaco-container"), {
+                value: demoCode,
+                language: "lua",
+                theme: "executor-dark",
+                fontSize: 13,
+                fontFamily: "'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace",
+                lineNumbers: "on",
+                lineNumbersMinChars: 2,
+                glyphMargin: false,
+                folding: true,
+                minimap: { enabled: false },
+                scrollBeyondLastLine: false,
+                automaticLayout: true,
+                padding: { top: 8 },
+                renderLineHighlight: "all",
+                cursorBlinking: "smooth",
+                cursorSmoothCaretAnimation: "on",
+                smoothScrolling: true,
+                bracketPairColorization: { enabled: true },
+                tabSize: 4,
+                insertSpaces: true
+            });
+        });
+
+        var heroEl = document.getElementById("hero");
+        var wpfWrap = document.getElementById("wpf-wrap");
+        var logo = document.querySelector(".splash-logo");
+
+        heroEl.addEventListener("mousemove", function(e) {
+            var rect = heroEl.getBoundingClientRect();
+            var x = (e.clientX - rect.left) / rect.width - 0.5;
+            var y = (e.clientY - rect.top) / rect.height - 0.5;
+            wpfWrap.style.transform = "perspective(800px) rotateX(" + (-y * 2) + "deg) rotateY(" + (x * 2) + "deg) translateZ(30px)";
+            logo.style.transform = "perspective(600px) rotateX(" + (4 + -y * 4) + "deg) rotateY(" + (x * 4) + "deg) translateZ(20px)";
+        });
+
+        heroEl.addEventListener("mouseleave", function() {
+            wpfWrap.style.transform = "perspective(800px) rotateX(2deg) rotateY(0deg) translateZ(30px)";
+            logo.style.transform = "perspective(600px) rotateX(4deg) rotateY(0deg) translateZ(20px)";
+        });
+    </script>
+</body>
+</html>
